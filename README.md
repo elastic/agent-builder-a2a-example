@@ -1,6 +1,6 @@
-# Elastic A2A Proxy for Gemini Enterprise
+# Elastic Agent Builder A2A Proxy for Gemini Enterprise
 
-A Cloud Run proxy that enables [Gemini Enterprise (Agent Builder)](https://cloud.google.com/products/agent-builder) to communicate with Elastic AI agents via the [A2A protocol](https://google.github.io/A2A/).
+A Cloud Run proxy that enables Gemini Enterprise to communicate with Elastic [Agent Builder](https://www.elastic.co/elasticsearch/agent-builder) agents via the [A2A protocol](https://google.github.io/A2A/).
 
 ## Architecture
 
