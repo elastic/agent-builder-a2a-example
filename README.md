@@ -11,16 +11,13 @@ flowchart LR
         CR["Cloud Run Proxy<br/>(This Service)"]
     end
 
-    subgraph Elastic["Elastic Cloud"]
-        KB["Kibana<br/>A2A Endpoint"]
-        EA["Elastic AI Agent"]
+    subgraph Kibana["Kibana"]
+        EA["Agent Builder<br/>A2A Endpoint"]
     end
 
     GE -->|"A2A Request<br/>(GCP IAM Auth)"| CR
-    CR -->|"Proxied Request<br/>(Kibana API Key)"| KB
-    KB --> EA
-    EA --> KB
-    KB -->|Response| CR
+    CR -->|"Proxied Request<br/>(Kibana API Key)"| EA
+    EA -->|Response| CR
     CR -->|Response| GE
 ```
 
