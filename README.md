@@ -7,7 +7,7 @@ A Cloud Run proxy that enables Gemini Enterprise to communicate with Elastic [Ag
 ```mermaid
 flowchart LR
     subgraph GCP["Google Cloud Platform"]
-        GE["Gemini Enterprise<br/>(Agent Builder)"]
+        GE["Gemini Enterprise<br/>"]
         CR["Cloud Run Proxy<br/>(This Service)"]
     end
 
