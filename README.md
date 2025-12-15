@@ -1,61 +1,105 @@
-# A2A Proxy
+# Elastic Agent Builder A2A Proxy for Gemini Enterprise
 
-A lightweight proxy that wraps Elastic OneChat agents exposed in Kibana and makes them available for A2A (Agent-to-Agent) communication.
+A Cloud Run proxy that enables Gemini Enterprise to communicate with Elastic [Agent Builder](https://www.elastic.co/elasticsearch/agent-builder) agents via the [A2A protocol](https://google.github.io/A2A/).
 
-## What it does
+## Architecture
 
-The proxy exposes two endpoints that forward requests to Kibana's OneChat API:
-- `GET /elastic/agent.json` → Returns agent configuration with URLs remapped to proxy endpoints
-- `POST /elastic/agent` → Forwards chat requests to the Kibana agent
+```mermaid
+flowchart LR
+    subgraph GCP["Google Cloud Platform"]
+        GE["Gemini Enterprise<br/>(Agent Builder)"]
+        CR["Cloud Run Proxy<br/>(This Service)"]
+    end
 
-Authentication to Kibana is handled automatically via API key injection.
+    subgraph Kibana["Kibana"]
+        EA["Agent Builder<br/>A2A Endpoint"]
+    end
 
-## Configuration
-
-Set these environment variables:
-- `AGENT_ID`: The OneChat agent ID in Kibana
-- `KBN_URL`: Base Kibana URL (e.g., `https://kibana.example.com`)
-- `API_KEY`: Kibana API key for authentication
-
-
-## Quick Start
-
-### Local Development
-```bash
-# Install dependencies
-uv sync
-
-# Set environment variables
-export AGENT_ID=your-agent-id
-export KBN_URL=https://your-kibana.com
-export API_KEY=your-api-key
-
-# Run locally
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8080
+    GE -->|"A2A Request<br/>(GCP IAM Auth)"| CR
+    CR -->|"Proxied Request<br/>(Kibana API Key)"| EA
+    EA -->|Response| CR
+    CR -->|Response| GE
 ```
 
-### Deploy to Cloud Run
-```bash
-# Run the deployment script
-./deploy.sh [PROJECT_ID] [SERVICE_NAME] [KBN_URL] [API_KEY] [AGENT_ID]
+## Security Model
 
-# Or create a .env file and run:
+| Connection | Authentication |
+|------------|----------------|
+| Gemini Enterprise → Cloud Run | GCP IAM (Cloud Run Invoker role) |
+| Cloud Run → Kibana | Kibana API Key (stored as env var) |
+
+- Cloud Run is deployed with `--no-allow-unauthenticated` — only authorized GCP principals can invoke it
+- Kibana API key is injected server-side; never exposed to clients
+
+## Setup
+
+### Prerequisites
+- GCP project with Cloud Run enabled
+- Elastic Cloud deployment with an AI agent configured
+- Kibana API key with appropriate permissions
+
+### Step 1: Deploy the Proxy to Cloud Run
+
+```bash
+# Clone this repository
+git clone <repo-url> && cd a2a-cloud-run
+
+# Create .env file (see .env.example)
+cp .env.example .env
+# Edit .env with your values:
+#   AGENT_ID=your-elastic-agent-id
+#   KBN_URL=https://your-kibana.elastic-cloud.com
+#   API_KEY=your-kibana-api-key
+#   PROJECT_ID=your-gcp-project
+#   SERVICE_NAME=elastic-agent-a2a
+
+# Deploy
 ./deploy.sh
 ```
 
-The deployment script:
-1. Builds and deploys the service to Cloud Run
-2. Sets required environment variables
-3. Automatically configures the `PROXY_BASE_URL` with the service's public URL
-4. Returns the service URL for use
+### Step 2: Grant Gemini Enterprise Access
 
-### Note about dependencies on Cloud Run
-- **Buildpacks require `requirements.txt`**: When deploying with `--source .` (buildpacks), Google Cloud Run installs Python dependencies from `requirements.txt`. Keeping only `pyproject.toml` is not sufficient for the buildpack to install dependencies. This repo includes `requirements.txt` for that reason.
+Add the Cloud Run Invoker IAM role to allow Agent Builder to call your proxy:
 
-## Usage
+```bash
+gcloud run services add-iam-policy-binding SERVICE_NAME \
+  --region=us-central1 \
+  --member="serviceAccount:SERVICE_AGENT_EMAIL" \
+  --role="roles/run.invoker"
+```
 
-Once deployed, your OneChat agent is available at:
-- `https://your-service-url/elastic/agent.json` - Get agent config
-- `https://your-service-url/elastic/agent` - Send chat messages
+See [Google's guide on IAM for Cloud Run agents](https://cloud.google.com/dialogflow/vertex/docs/concept/agents-cloud-run) for details.
 
-The proxy automatically handles authentication and URL remapping, making your Kibana OneChat agent accessible for A2A integrations.
+### Step 3: Register the Agent in Gemini Enterprise
+
+Register your proxied agent endpoint in Agent Builder using the Cloud Run service URL:
+
+```
+https://YOUR-SERVICE-URL/elastic/agent
+```
+
+## Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/elastic/agent.json` | GET | Agent card (A2A discovery) |
+| `/elastic/agent` | POST | Agent invocation (A2A messages) |
+| `/healthz` | GET | Health check |
+
+## Configuration Reference
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `AGENT_ID` | Yes | Elastic AI agent ID |
+| `KBN_URL` | Yes | Kibana base URL |
+| `API_KEY` | Yes | Kibana API key |
+| `PROXY_BASE_URL` | Auto | Set automatically by deploy script |
+| `TIMEOUT_SECONDS` | No | Request timeout (default: 120) |
+
+## Local Development
+
+```bash
+uv sync
+cp .env.example .env  # Edit with your values
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8080
+```

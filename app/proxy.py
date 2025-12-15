@@ -170,6 +170,7 @@ async def proxy_agent_request(
     except httpx.TimeoutException:
         raise HTTPException(status_code=504, detail="Upstream timeout")
     except httpx.RequestError as e:
+        print(f"Upstream request failed: {e}")
         raise HTTPException(
             status_code=502, detail=f"Upstream request failed: {e}"
         ) from e

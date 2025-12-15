@@ -18,11 +18,13 @@ async def healthz() -> str:
 # Use a single configurable base for both routes
 @app.get(f"{settings.AGENT_PROXY_PATH}.json")
 async def elastic_agent_json(request: Request):
+    print("elastic_agent_json")
     return await proxy_agent_card_request(request)
 
 
 @app.post(settings.AGENT_PROXY_PATH)
 async def elastic_agent(request: Request):
+    print("elastic_agent")
     return await proxy_agent_request(request)
 
 
