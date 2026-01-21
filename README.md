@@ -57,6 +57,27 @@ cp .env.example .env
 ./deploy.sh
 ```
 
+To test it, install the [A2A inspector](https://github.com/a2aproject/a2a-inspector) locally.
+
+In order to authenticate,  you can generate an ad-hoc Bearer token with
+
+```bash
+gcloud auth print-identity-token
+```
+
+And pass Authorization: Bearer {your-token} in the header section of A2A inspector. 
+
+The URL of agentcard should be:
+
+```bash
+GET <your-cloudrun-endpoint>/elastic/agent.json
+```
+
+The protocol endpoint is:
+```bash
+POST <your-cloudrun-endpoint>/elastic/agent
+```
+
 ### Step 2: Grant Gemini Enterprise Access
 
 Add the Cloud Run Invoker IAM role to allow Agent Builder to call your proxy:
