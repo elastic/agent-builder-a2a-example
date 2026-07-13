@@ -72,11 +72,37 @@ See [Google's guide on IAM for Cloud Run agents](https://cloud.google.com/dialog
 
 ### Step 3: Register the Agent in Gemini Enterprise
 
-Register your proxied agent endpoint in Agent Builder using the Cloud Run service URL:
+Register your proxied agent endpoint in Gemini Enterprise using the Cloud Run service URL:
 
 ```
 https://YOUR-SERVICE-URL/elastic/agent
 ```
+
+You can find the agent card at:
+
+```
+https://YOUR-SERVICE-URL/elastic/agent.json
+```
+
+The best way to retrieve the agent card and test the agent's A2A endpoint before deploying to GE is via the [A2A Inspector](https://github.com/a2aproject/a2a-inspector).
+An authentication token is needed to access the endpoint. You can print it out via
+
+```
+gcloud auth print-identity-token
+```
+
+and then copy-paste it in A2A inspector adding a custom header named 'Authorization' and a value set with a 'Bearer ' prefix
+<img width="1025" height="562" alt="image" src="https://github.com/user-attachments/assets/43c04d55-9b5d-4cce-8569-d79690f6e7cc" />
+
+
+To finally register the agent on Gemini Enterprise:
+- Copy the whole body of the Agent Card from the Inspector
+- On the Gemini Enterprise admin UI click on 'Add Agent'
+- Select the Custom A2A Agent option
+- Paste the agent card full body into the related field and confirm
+- Skip and Finish on the OAuth tab
+
+Your agent is now onboarded.
 
 ## Endpoints
 
