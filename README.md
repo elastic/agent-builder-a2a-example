@@ -42,7 +42,7 @@ flowchart LR
 
 ```bash
 # Clone this repository
-git clone <repo-url> && cd a2a-cloud-run
+git clone <repo-url> && cd agent-builder-a2a-example
 
 # Create .env file (see .env.example)
 cp .env.example .env
